@@ -10,6 +10,7 @@ flake8 = "*"
 
 [packages]
 flask = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"

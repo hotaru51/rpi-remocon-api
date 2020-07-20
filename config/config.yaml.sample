@@ -1,0 +1,6 @@
+gpio_pin:
+  temperature: 18
+  ir: 24
+sensor:
+  retry_count: 20
+  interval: 1
