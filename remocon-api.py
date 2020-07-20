@@ -31,7 +31,7 @@ def healthcheck():
 
 @app.route('/aircon/off', methods=['post'])
 def off():
-    if execute_irrp('off'):
+    if send_signal('off'):
         status = 'ok'
     else:
         status = 'ng'
@@ -45,8 +45,8 @@ def off():
 
 
 @app.route('/aircon/<command>/<temp>', methods=['post'])
-def send_signal(command, temp):
-    if execute_irrp(command, temp):
+def aircon(command, temp):
+    if send_signal(command, temp):
         status = 'ok'
     else:
         status = 'ng'
@@ -83,23 +83,23 @@ def get_timestamp():
     return datetime.now().isoformat()
 
 
-def execute_irrp(command, temp=None):
+def send_signal(command, temp=None):
     if temp is None:
         signal = 'aircon:' + remove_symbols(command)
     else:
         signal = 'aircon:' + remove_symbols(command) + '_' + remove_symbols(temp)
 
     ir_command = [
-        '/usr/local/bin/irrp', '-p',
-        '-g', str(config['gpio_pin']['ir']),
-        '-f', os.path.dirname(os.path.realpath(__file__)) + '/signals/aircon',
-        signal
-    ]
+            '/usr/local/bin/irrp', '-p',
+            '-g', str(config['gpio_pin']['ir']),
+            '-f', os.path.dirname(os.path.realpath(__file__)) + '/signals/aircon',
+            signal
+            ]
 
-    print(ir_command)
 
     result = True
     try:
+        # TODO: 存在しないIDで送信しようとしてもirrpの終了ステータスが0になるので対策する
         subprocess.run(ir_command, check=True)
     except subprocess.CalledProcessError:
         result = False
@@ -117,12 +117,24 @@ def get_temperature_and_humidity():
         result = sensor.read()
         if result.is_valid():
             return {
-                'temperature': result.temperature,
-                'humidity': result.humidity
-            }
+                    'temperature': result.temperature,
+                    'humidity': result.humidity
+                    }
         else:
             time.sleep(config['sensor']['interval'])
     return None
+
+
+# TODO: 適切なエラーハンドリングの実装
+@app.errorhandler(Exception)
+def error(e):
+    res = {
+            'timestamp': get_timestamp(),
+            'status': 'ng',
+            'message': 'exception'
+            }
+
+    return jsonify(res)
 
 
 if __name__ == '__main__':
