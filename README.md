@@ -4,12 +4,36 @@ Raspberry Pi学習リモコンのAPI
 
 ## Requirement
 
+* Python 3
 * [DHT11_Python](https://github.com/szazo/DHT11_Python)
 * [IR Record and Playback(irrp.py)](http://abyz.me.uk/rpi/pigpio/examples.html#Python_irrp_py)
 
 ## Deploy
 
+### 専用ユーザ作成
+
+```
+sudo useradd -m remocon
+```
+
+### clone
+
+```
+cd /opt
+sudo git clone https://github.com/hotaru51/rpi-remocon-api.git
+sudo chown -R remocon:remocon rpi-remocon-api/
+```
+
+### 依存Pythonパッケージ
+
 Pipfileに指定のあるもの以外は別途インストールする
+
+```sh
+sudo pip3 install pipenv
+pip3 lock -r > requirements.txt
+sudo pip3 install -r requirements.txt
+rm requirements.txt
+```
 
 ### irrp.pyのインストール
 
@@ -28,21 +52,6 @@ irrp --help
 git submodule update -i
 cd dht11
 sudo python3 -m pip install .
-```
-
-### その他Pythonパッケージ
-
-```sh
-sudo pip3 install pipenv
-pip3 lock -r > requirements.txt
-sudo pip3 install -r requirements.txt
-rm requirements.txt
-```
-
-### config.yamlの配置
-
-```sh
-cp -p config/config.yaml.sample config/config.yaml
 ```
 
 ### 信号の記録
@@ -70,4 +79,30 @@ cd signals
 irrp -r -g 23 \
     -f aircon aircon:off \
     --post 130
+```
+
+### NGINXの設定
+
+NGNIXはインストール済みとする  
+`remocon_api_nginx.conf` 配置後、 `server_name` をRaspberry PiのIPに変更する
+
+```sh
+sudo cp config/remocon_api_nginx.conf /etc/nginx/conf.d/
+# server_nameの修正
+vi /etc/nginx/conf.d/remocon_api_nginx.conf
+# 自動起動確認
+systemctl list-unit-files | grep nginx
+# 設定されていなければ自動起動有効化
+systemctl enable nginx
+```
+
+### systemdサービス追加
+
+```
+cp rpi-remocon-api.service rpi-remocon-api.socket /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable rpi-remocon-api.service
+systemctl enable rpi-remocon-api.socket
+# 確認
+systemctl list-unit-files | grep rpi-remocon-api
 ```
