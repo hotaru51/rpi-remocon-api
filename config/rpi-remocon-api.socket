@@ -1,0 +1,9 @@
+[Unit]
+Description=rpi-remocon-api socket
+
+[Socket]
+ListenStream=/opt/rpi-remocon-api/tmp/rpi-remocon-api.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=sockets.target
