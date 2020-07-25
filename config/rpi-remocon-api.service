@@ -1,0 +1,19 @@
+[Unit]
+Description=rpi-remocon-api application
+Requires=rpi-remocon-api.socket
+After=network.target
+
+[Service]
+Type=notify
+User=remocon
+Group=remocon
+RuntimeDirectory=gunicorn
+WorkingDirectory=/opt/rpi-remocon-api
+ExecStart=/usr/local/bin/gunicorn -c config/remocon_api_gunicorn.py remocon-api:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
